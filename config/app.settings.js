@@ -19,10 +19,7 @@ module.exports = function settings(prm) {
     local_storage_prefix: lsprefix,
 
     // гостевые пользователи для демо-режима
-    guests: [{
-      username: 'guest',
-      password: 'iANSJ5mHnVoq5Kgh2do='
-    }],
+    guests: [],
 
     // расположение couchdb для сайта (редирект настроен в nginx)
     // если couchdb выполняется на том же сервере, что и nginx, можно указать "//localhost:5984/",

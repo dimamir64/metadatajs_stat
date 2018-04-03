@@ -144,11 +144,11 @@ module.exports = {
             test: /\.(js|jsx|mjs)$/,
             include: [
               paths.appSrc,
-              path.resolve(paths.appNodeModules, '../config'),
+              //path.resolve(paths.appNodeModules, '../config'),
               path.resolve(paths.appNodeModules, './metadata-react'),
               //path.resolve(paths.appNodeModules, './metadata-redux'),
             ],
-            //exclude: [/\\metadata\\/,/\/metadata\//],
+            exclude: [/\\metadata\\/,/\/metadata\//],
             loader: require.resolve('babel-loader'),
             options: {
               // This is a feature of `babel-loader` for webpack (not Babel itself).

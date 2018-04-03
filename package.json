@@ -17,7 +17,7 @@
   "bugs": {
     "url": "https://github.com/oknosoft/stat/issues"
   },
-  "homepage": "https://www.oknosoft.ru/stat/",
+  "homepage": "https://stat.oknosoft.ru/",
   "dependencies": {
     "metadata-abstract-ui": "2.0.16-beta.55",
     "metadata-core": "2.0.16-beta.55",
