@@ -1,9 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-
 import {withStyles} from 'material-ui/styles';
-
-import {mainTitle} from '../App/AppView';
 import styles from '../../pages/Home/styles';
 
 class DumbScreen extends Component {

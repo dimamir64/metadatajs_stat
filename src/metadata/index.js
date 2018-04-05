@@ -1,17 +1,11 @@
 
 // конструктор metadata.js
-import MetaEngine from 'metadata-core/index.min';
-import plugin_pouchdb from 'metadata-pouchdb/index.min';
-import plugin_ui from 'metadata-abstract-ui/index.min';
-import plugin_ui_tabulars from 'metadata-abstract-ui/tabulars.min';
-
-// import MetaEngine from 'metadata-core';
-// import plugin_pouchdb from 'metadata-pouchdb';
-// import plugin_ui from 'metadata-abstract-ui';
-// import plugin_ui_tabulars from 'metadata-abstract-ui/tabulars';
-// import plugin_superlogin from 'metadata-superlogin';
-
+import MetaEngine from 'metadata-core';
+import plugin_pouchdb from 'metadata-pouchdb';
+import plugin_ui from 'metadata-abstract-ui';
+import plugin_ui_tabulars from 'metadata-abstract-ui/tabulars';
 import plugin_react from 'metadata-react/plugin';
+import 'pouchdb-authentication';
 
 // функция установки параметров сеанса
 import settings from '../../config/app.settings';
@@ -24,8 +18,6 @@ MetaEngine
   .plugin(plugin_ui)          // подключаем общие методы интерфейса пользователя
   .plugin(plugin_ui_tabulars) // подключаем методы экспорта табличной части
   .plugin(plugin_react);      // подключаем react-специфичные модификаторы к scheme_settings
-
-require('pouchdb-authentication');
 
 // создаём экземпляр MetaEngine
 const $p = new MetaEngine();

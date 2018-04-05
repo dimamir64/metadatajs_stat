@@ -110,7 +110,7 @@ class AppView extends Component {
 
   render() {
     const {props, state} = this;
-    const {classes, handleNavigate, location, snack, alert, confirm, doc_ram_loaded, title, sync_started, fetch, user, couch_direct, offline,
+    const {classes, handleNavigate, location, snack, alert, confirm, doc_ram_loaded, title, user, couch_direct, offline,
             meta_loaded} = props;
     const isHome = location.pathname === '/';
 
@@ -146,6 +146,7 @@ class AppView extends Component {
       }
 
       const wraper = (Component, routeProps) => {
+        // eslint-disable-next-line
         const {classes, ...mainProps} = props;
         return <Component {...mainProps} {...routeProps} disablePermanent={disablePermanent}/>;
       };
@@ -155,7 +156,7 @@ class AppView extends Component {
           <Switch key="switch">
             <Route exact path="/" render={this.renderHome}/>
             <Route path="/:area(doc|cat|ireg|cch|rep).:name" render={(props) => wraper(DataRoute, props)}/>
-            <Route path="/login" render={(props) => wraper(FrmLogin, props)}/>
+            <Route path="/login" render={(props) => wraper(FrmLogin, Object.assign({disable_settings: true}, props))}/>
             <Route render={(props) => wraper(MarkdownRoute, props)}/>
           </Switch>
         </div>

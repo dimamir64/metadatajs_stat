@@ -8,6 +8,7 @@ const items = [
     text: 'ЛУРВ',
     navigate: '/rep.lurv/main',
     need_meta: true,
+    need_user: true,
     icon: <IconTimer/>
   },
   {

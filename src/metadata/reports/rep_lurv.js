@@ -22,7 +22,6 @@ export default function ($p) {
      * @param scheme
      */
     prepare(scheme) {
-      const {moment} = $p.utils;
       const {pouch} = $p.adapters;
       const {date_from, date_till, query} = scheme;
       const {data} = this;
@@ -34,11 +33,11 @@ export default function ($p) {
         startkey: [date_from.getFullYear(), date_from.getMonth() + 1, date_from.getDate()],
         endkey: [date_till.getFullYear(), date_till.getMonth() + 1, date_till.getDate(), '\ufff0']
       };
-      const start_total = {};
       const default_query = 'lurv/lurv';
 
 
       // фильтр для отбрасывания лишних строк
+      // eslint-disable-next-line
       function discard(key) {
         return false;
       }
@@ -53,8 +52,8 @@ export default function ($p) {
               }
               data.add({
                 period: new Date(`${key[0].pad(4)}-${key[1].pad(2)}-${key[2].pad(2)}`),
-                year: key[0],
-                month: key[1],
+                year: key[0].pad(4),
+                month: key[1].pad(2),
                 register: key[3],
                 note: key[4],
                 duration: value,
