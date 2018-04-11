@@ -1,7 +1,7 @@
 import React from 'react';
-import IconInfo from 'material-ui-icons/Info';
-import IconPerson from 'material-ui-icons/Person';
-import IconTimer from 'material-ui-icons/Timer';
+import IconInfo from '@material-ui/icons/Info';
+import IconPerson from '@material-ui/icons/Person';
+import IconTimer from '@material-ui/icons/Timer';
 
 const items = [
   {
