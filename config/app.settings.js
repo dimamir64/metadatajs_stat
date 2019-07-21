@@ -4,16 +4,17 @@
  *
  * @param prm {Object} - в свойствах этого объекта определяем параметры работы программы
  */
-module.exports = function settings(prm) {
 
-  if(!prm) {
-    prm = {};
-  };
+const is_node = typeof process !== 'undefined' && process.versions && process.versions.node;
 
-  var lsprefix = 'st_';
-  var couch_path = 'http://fl211:5984/' + lsprefix;
+module.exports = function settings(prm = {}) {
+
+  const lsprefix = 'st_';
+  const couch_path = 'https://stat.oknosoft.ru/couchdb/' + lsprefix;
 
   return Object.assign(prm, {
+
+    is_node,
 
     // разделитель для localStorage
     local_storage_prefix: lsprefix,
@@ -34,11 +35,9 @@ module.exports = function settings(prm) {
     couch_direct: true,
 
     // фильтр для репликации с CouchDB не используем
-    pouch_filter: {
-      meta: 'auth/meta',
-    },
+    pouch_filter: {},
 
-    // по умолчанию, обращаемся к зоне 1
+    // по умолчанию, обращаемся к зоне 0
     zone: 0,
 
     // объявляем номер демо-зоны
@@ -58,8 +57,14 @@ module.exports = function settings(prm) {
     //use_ip_geo: true,
 
     // карты google не используем
-    //use_google_geo: 'AIzaSyAO-Jca5NTE5bQ7IY7BxFCl0jgW9OsJvuM',
+    //use_google_geo: '',
 
+  }, is_node && {
+    // авторизация couchdb
+    user_node: {
+      username: process.env.DBUSER || '',
+      password: process.env.DBPWD || '',
+    }
   });
 
 };

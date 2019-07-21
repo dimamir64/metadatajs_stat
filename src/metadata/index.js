@@ -10,46 +10,51 @@ import 'pouchdb-authentication';
 // функция установки параметров сеанса
 import settings from '../../config/app.settings';
 
-// генератор события META_LOADED для redux
-import {metaActions} from 'metadata-redux';
+// читаем скрипт инициализации метаданных, полученный в результате выполнения meta:prebuild
+import meta_init from './init';
+import modifiers from './modifiers';
 
+// генераторы действий и middleware для redux
+//import {combineReducers} from 'redux';
+import {addMiddleware} from 'redux-dynamic-middlewares';
+import {metaActions, metaMiddleware} from 'metadata-redux';
+
+// плагины MetaEngine
 MetaEngine
   .plugin(plugin_pouchdb)     // подключаем pouchdb-адаптер к прототипу metadata.js
   .plugin(plugin_ui)          // подключаем общие методы интерфейса пользователя
   .plugin(plugin_ui_tabulars) // подключаем методы экспорта табличной части
   .plugin(plugin_react);      // подключаем react-специфичные модификаторы к scheme_settings
 
-// создаём экземпляр MetaEngine
-const $p = new MetaEngine();
+// создаём экземпляр MetaEngine и экспортируем его глобально
+const $p = global.$p = new MetaEngine();
 
 // параметры сеанса инициализируем сразу
 $p.wsql.init(settings);
 
+// со скрипом инициализации метаданных, так же - не затягиваем
+meta_init($p);
+
 // скрипт инициализации в привязке к store приложения
-export function init(dispatch) {
+export function init(store) {
 
-  // читаем скрипт инициализации метаданных, полученный в результате выполнения meta:prebuild
-  return import('./init')
-    .then((meta_init) => {
+  // плагин pouchdb-authentication подключаем асинхронно
+  return import('pouchdb-authentication')
+    .then(() => {
+      const {dispatch} = store;
 
-      // выполняем скрипт инициализации метаданных
-      meta_init($p);
+      // подключаем metaMiddleware
+      addMiddleware(metaMiddleware($p));
 
       // сообщяем адаптерам пути, суффиксы и префиксы
-      const {wsql, job_prm, adapters} = $p;
-
-      adapters.pouch.init(wsql, job_prm);
-
-      // шрифт Roboto грузим асинхронно
-      $p.utils.load_script('https://fonts.googleapis.com/css?family=Roboto', 'link');
-
-      // читаем скрипты модификаторов DataObj`s и DataManager`s
-      return import('./modifiers');
-    })
-    .then((modifiers) => {
+      const {wsql, job_prm, adapters: {pouch}} = $p;
+      if(wsql.get_user_param('couch_path') !== job_prm.couch_local && process.env.NODE_ENV !== 'development') {
+        wsql.set_user_param('couch_path', job_prm.couch_local);
+      }
+      pouch.init(wsql, job_prm);
 
       // выполняем модификаторы
-      modifiers.default($p);
+      modifiers($p, dispatch);
 
       // информируем хранилище о готовности MetaEngine
       dispatch(metaActions.META_LOADED($p));
@@ -59,8 +64,5 @@ export function init(dispatch) {
     })
     .catch($p && $p.record_log);
 }
-
-// экспортируем $p и PouchDB глобально
-global.$p = $p;
 
 export default $p;

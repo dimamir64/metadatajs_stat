@@ -3,12 +3,11 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Switch, Route} from 'react-router';
-import Typography from 'material-ui/Typography';
-import AppBar from 'material-ui/AppBar';
-import Toolbar from 'material-ui/Toolbar';
-import IconButton from 'material-ui/IconButton';
+import Typography from '@material-ui/core/Typography';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
-//import Tooltip from 'material-ui/Tooltip';
 import Snack from 'metadata-react/App/Snack';       // сообщения в верхней части страницы (например, обновить после первого запуска)
 import Alert from 'metadata-react/App/Alert';       // диалог сообщения пользователю
 import Confirm from 'metadata-react/App/Confirm';   // диалог вопросов пользователю (да, нет)
@@ -16,16 +15,17 @@ import FrmLogin from 'metadata-react/FrmLogin';     // логин и свойс�
 import NeedAuth from 'metadata-react/App/NeedAuth'; // страница "необходима авторизация"
 import AppDrawer from 'metadata-react/App/AppDrawer';
 import Notifications from 'metadata-react/Notifications';
+import {withIfaceAndMeta} from 'metadata-redux';
+import withWindowSize from 'metadata-react/WindowSize';
 
-import DumbScreen from '../DumbScreen';             // заставка "загрузка занных"
-import DataRoute from '../DataRoute';               // вложенный маршрутизатор страниц с данными
+import DumbScreen from './DumbScreen';              // заставка "загрузка занных"
+import DataRoute from './DataRoute';                // вложенный маршрутизатор страниц с данными
 import MarkdownRoute from '../MarkdownRoute';       // вложенный маршрутизатор страниц с Markdown, 404 живёт внутри Route
 import HomeView from '../../pages/Home';            // домашняя страница
 
-import {withIfaceAndMeta} from 'metadata-redux';
+
 import withStyles from './styles';
-import withWindowSize from 'metadata-react/WindowSize';
-import compose from 'recompose/compose';
+import {compose} from 'redux';
 
 import items, {item_props} from '../../pages';      // массив элементов меню и метод для вычисления need_meta, need_user по location.pathname
 
@@ -48,7 +48,6 @@ class AppView extends Component {
   }
 
   shouldComponentUpdate(props, {need_user, need_meta}) {
-    const {meta_loaded, user, offline} = props;
     const iprops = item_props();
     let res = true;
 
@@ -62,12 +61,6 @@ class AppView extends Component {
       res = false;
     }
 
-    // если есть сохранённый пароль и online, пытаемся авторизоваться
-    if(meta_loaded && !user.logged_in && user.has_login && !user.try_log_in && !offline) {
-      props.handleLogin();
-      res = false;
-    }
-
     return res;
   }
 
@@ -77,7 +70,7 @@ class AppView extends Component {
 
   handleReset(reset) {
     const {handleNavigate, first_run} = this.props;
-    (first_run || reset) ? window.location.replace('/') : handleNavigate('/');
+    (first_run || reset) ? location.replace('/') : handleNavigate('/');
   }
 
   handleDrawerToggle = () => {
@@ -110,7 +103,7 @@ class AppView extends Component {
 
   render() {
     const {props, state} = this;
-    const {classes, handleNavigate, location, snack, alert, confirm, doc_ram_loaded, title, user, couch_direct, offline,
+    const {classes, handleNavigate, location, snack, alert, confirm, doc_ram_loaded, title, sync_started, fetch, user, couch_direct, offline,
             meta_loaded} = props;
     const isHome = location.pathname === '/';
 
@@ -126,14 +119,22 @@ class AppView extends Component {
         dstyle.marginLeft = dx;
       }
 
-      if(meta_loaded && state.need_user && ((!user.try_log_in && !user.logged_in) || (couch_direct && offline))) {
-        return <NeedAuth
-          key="auth"
-          handleNavigate={handleNavigate}
-          handleIfaceState={props.handleIfaceState}
-          title={title}
-          offline={couch_direct && offline}
-        />;
+      let need_auth = meta_loaded && state.need_user && ((!user.try_log_in && !user.logged_in) || (couch_direct && offline));
+      if(need_auth && !couch_direct && props.complete_loaded && $p.current_user && $p.current_user.name == user.name) {
+        need_auth = false;
+      }
+
+      if(need_auth) {
+        return (
+          <div style={dstyle}>
+            <NeedAuth
+              handleNavigate={handleNavigate}
+              handleIfaceState={props.handleIfaceState}
+              title={title}
+              offline={couch_direct && offline}
+            />
+          </div>
+        );
       }
 
       if(!location.pathname.match(/\/login$/) && ((state.need_meta && !meta_loaded) || (state.need_user && !props.complete_loaded))) {
@@ -146,7 +147,7 @@ class AppView extends Component {
       }
 
       const wraper = (Component, routeProps) => {
-        // eslint-disable-next-line
+        /* eslint-disable-next-line */
         const {classes, ...mainProps} = props;
         return <Component {...mainProps} {...routeProps} disablePermanent={disablePermanent}/>;
       };
@@ -179,18 +180,17 @@ class AppView extends Component {
     return [
       // основной layout
       <div key="content" className={classes.root}>
-        <AppBar className={appBarClassName}>
+        <AppBar className={appBarClassName} color="default">
           <Toolbar disableGutters>
             <IconButton
-              color="inherit"
               aria-label="open drawer"
               onClick={this.handleDrawerToggle}
               className={navIconClassName}
             >
-              <MenuIcon/>
+              <MenuIcon color="inherit"/>
             </IconButton>
 
-            <Typography className={classes.title} type="title" color="inherit" noWrap>{title || mainTitle}</Typography>
+            <Typography className={classes.title} variant="h6" color="textSecondary" noWrap>{title || mainTitle}</Typography>
 
             <Notifications />
 

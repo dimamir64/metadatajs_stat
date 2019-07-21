@@ -2,9 +2,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {withStyles} from 'material-ui/styles';
-import Typography from 'material-ui/Typography';
-import Button from 'material-ui/Button';
+import {withStyles} from '@material-ui/styles';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 import Helmet from 'react-helmet';
 import AppFooter from './Footer';
 import Flask from '@material-ui/icons/Timer';
@@ -28,13 +28,13 @@ function PageHome(props) {
     <div className={classes.root}>
       <Helmet title={mainTitle}/>
 
-      <div className={classNames(classes.hero, classes.background)}>
+      <div className={classes.hero}>
         <div className={classes.content}>
 
           <div className={classes.text}>
-            <Typography variant="display1" component="h1" color="inherit" noWrap>{mainTitle}</Typography>
+            <Typography variant="h4" component="h1" color="inherit" noWrap style={{marginBottom: 24}}>{mainTitle}</Typography>
             <Flask alt={mainTitle} className={classes.logo}/>
-            <Button className={classes.button} variant="raised" onClick={() => handleNavigate('/rep.lurv/main')}>Начать</Button>
+            <Button className={classes.button} variant="contained" onClick={() => handleNavigate('/rep.lurv/main')}>Начать</Button>
           </div>
         </div>
       </div>

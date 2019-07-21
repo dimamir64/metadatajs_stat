@@ -1,6 +1,6 @@
 /**
  * ### Модуль сборки *.js по описанию метаданных
- * &copy; Evgeniy Malyarov http://www.oknosoft.ru 2014-2018
+ * &copy; Evgeniy Malyarov http://www.oknosoft.ru 2014-2019
  * @module  metadata-prebuild
  */
 
@@ -11,6 +11,8 @@ const path = require('path');
 
 process.env.DEBUG = 'prebuild:,-not_this';
 const debug = require('debug')('prebuild:');
+
+//const patch = require('./meta.patch');
 
 debug('Читаем конструктор и плагины');
 
@@ -48,9 +50,16 @@ $p.wsql.init((prm) => {
   // расположение couchdb
   prm.couch_path = config.couch_local;
 
+  prm.use_meta = config.use_meta;
+
+
 }, ($p) => {
 
-  const db = new MetaEngine.classes.PouchDB(config.couch_local + 'meta', {skip_setup: true});
+  const db = new MetaEngine.classes.PouchDB(config.couch_local + 'meta',
+    {
+      auth: config.user_node,
+      skip_setup: true,
+    });
 
   let _m;
 
@@ -78,24 +87,8 @@ $p.wsql.init((prm) => {
       delete _m._id;
       delete _m._rev;
 
-      // фильтруем метаданные для облегчения рабочего места
-      // let filter = {
-      //   cat: ['users','users_acl','stores','divisions','individuals','parameters_keys','work_shifts','work_center_kinds','work_centers','property_values'],
-      //   doc: ['planning_event'],
-      //   dp: [],
-      //   areg: [],
-      //   ireg: ['log']
-      // }, filtred_meta = {};
-      // for(var cls in _m){
-      //   if(!filter[cls]){
-      //     filtred_meta[cls] = _m[cls]
-      //   }else{
-      //     filtred_meta[cls] = {};
-      //     filter[cls].forEach(function (name) {
-      //       filtred_meta[cls][name] = _m[cls][name]
-      //     })
-      //   }
-      // }
+      // фильтруем и корректируем метаданные
+      //patch(_m);
 
       return $p.md.init(_m);
     })
@@ -110,13 +103,14 @@ $p.wsql.init((prm) => {
       debug('Получаем скрипт таблиц alasql');
       $p.md.create_tables((sql) => {
 
-        text = '/* eslint-disable */\nmodule.exports = function meta($p) {\n\n'
-          + '$p.wsql.alasql(\'' + sql + '\', []);\n\n'
-          + '$p.md.init(' + JSON.stringify(_m) + ');\n\n'
-          + text + '};';
+        text = `/* eslint-disable */
+export function meta_init($p) {
+  $p.wsql.alasql('${sql}', []);\n  
+  $p.md.init(${JSON.stringify(_m)});\n  
+  ${text}};`;
 
         debug('Записываем результат');
-        const fname = path.resolve(__dirname, '../src/metadata/init.js');
+        let fname = path.resolve(__dirname, '../src/metadata/init.js');
         fs.writeFile(fname, text, 'utf8', (err) => {
           if (err) {
             debug(err);
@@ -143,7 +137,7 @@ function create_modules(_m) {
 
   const sys_nsmes = ['log', 'meta_objs', 'meta_fields', 'scheme_settings'];
   const categoties = {
-      cch: {mgr: 'ChartOfCharacteristicManager', proto: 'CatObj'},
+      cch: {mgr: 'ChartOfCharacteristicManager', proto: 'CatObj', dir: 'chartscharacteristics'},
       cacc: {mgr: 'ChartOfAccountManager', proto: 'CatObj'},
       cat: {mgr: 'CatManager', proto: 'CatObj', dir: 'catalogs'},
       bp: {mgr: 'BusinessProcessManager', proto: 'BusinessProcessObj'},
@@ -152,12 +146,12 @@ function create_modules(_m) {
       ireg: {mgr: 'InfoRegManager', proto: 'RegisterRow'},
       areg: {mgr: 'AccumRegManager', proto: 'RegisterRow'},
       dp: {mgr: 'DataProcessorsManager', proto: 'DataProcessorObj'},
-      rep: {mgr: 'DataProcessorsManager', proto: 'DataProcessorObj'},
+      rep: {mgr: 'DataProcessorsManager', proto: 'DataProcessorObj', dir: 'reports'},
     };
   let text = `(function(){
-  const {EnumManager,CatManager,DocManager,DataProcessorsManager,ChartOfCharacteristicManager,ChartOfAccountManager,
-    InfoRegManager,AccumRegManager,BusinessProcessManager,TaskManager,CatObj, DocObj, TabularSectionRow, DataProcessorObj,
-    RegisterRow, BusinessProcessObj, TaskObj} = $p.constructor.classes;
+  const {MetaEventEmitter,EnumManager,CatManager,DocManager,DataProcessorsManager,ChartOfCharacteristicManager,ChartOfAccountManager,
+    InfoRegManager,AccumRegManager,BusinessProcessManager,TaskManager,CatObj,DocObj,TabularSectionRow,DataProcessorObj,
+    RegisterRow,BusinessProcessObj,TaskObj} = $p.constructor.classes;
     
   const _define = Object.defineProperties;
 
@@ -193,10 +187,16 @@ function obj_constructor_text(_m, category, name, categoties) {
     f, props = '';
 
   const filename = dir && path.resolve(__dirname, `../src/metadata/${dir}/${category}_${name}.js`);
-  const extModule = dir && fs.existsSync(filename) && require(filename);
+  let extModule;
+  if(dir && fs.existsSync(filename)) {
+    try {
+      extModule = require(filename);
+    }
+    catch(err) {}
+  };
 
   const extender = extModule && extModule[fn_name] && extModule[fn_name].toString();
-  const extText = extender && extender.substring(extender.indexOf('{') + 1, extender.lastIndexOf('}') - 1);
+  const objText = extender && extender.substring(extender.indexOf('{') + 1, extender.lastIndexOf('}') - 1);
 
   const substitute = extModule && extModule.substitute && extModule.substitute.toString();
   const substituteText = substitute && substitute.substring(substitute.indexOf('{') + 3, substitute.lastIndexOf('}'));
@@ -211,38 +211,43 @@ function obj_constructor_text(_m, category, name, categoties) {
   text += '\n* @constructor \n*/\n';
   text += `class ${fn_name} extends ${proto}{\n`;
 
-  // реквизиты по метаданным
-  if (meta.fields) {
-    for (f in meta.fields) {
-      if(category === 'cch' && f === 'type') {
-        text += `get type(){const {type} = this._obj; return typeof type === 'object' ? type : {types: []}}
+  // если описан конструктор объекта, используем его
+  if(objText && extModule[fn_name]._replace){
+    text += objText;
+  }
+  else {
+    // реквизиты по метаданным
+    if (meta.fields) {
+      for (f in meta.fields) {
+        if(category === 'cch' && f === 'type') {
+          text += `get type(){const {type} = this._obj; return typeof type === 'object' ? type : {types: []}}
         set type(v){this._obj.type = typeof v === 'object' ? v : {types: []}}\n`;
+        }
+        else {
+          text += `get ${f}(){return this._getter('${f}')}\nset ${f}(v){this._setter('${f}',v)}\n`;
+        }
       }
-      else {
+    }
+    else {
+      for (f in meta.dimensions) {
+        text += `get ${f}(){return this._getter('${f}')}\nset ${f}(v){this._setter('${f}',v)}\n`;
+      }
+      for (f in meta.resources) {
+        text += `get ${f}(){return this._getter('${f}')}\nset ${f}(v){this._setter('${f}',v)}\n`;
+      }
+      for (f in meta.attributes) {
         text += `get ${f}(){return this._getter('${f}')}\nset ${f}(v){this._setter('${f}',v)}\n`;
       }
     }
-  }
-  else {
-    for (f in meta.dimensions) {
-      text += `get ${f}(){return this._getter('${f}')}\nset ${f}(v){this._setter('${f}',v)}\n`;
-    }
-    for (f in meta.resources) {
-      text += `get ${f}(){return this._getter('${f}')}\nset ${f}(v){this._setter('${f}',v)}\n`;
-    }
-    for (f in meta.attributes) {
-      text += `get ${f}(){return this._getter('${f}')}\nset ${f}(v){this._setter('${f}',v)}\n`;
-    }
-  }
 
-  // табличные части по метаданным - устанавливаем геттер и сеттер для табличной части
-  for (const ts in meta.tabular_sections) {
-    text += `get ${ts}(){return this._getter_ts('${ts}')}\nset ${ts}(v){this._setter_ts('${ts}',v)}\n`;
-  }
+    // табличные части по метаданным - устанавливаем геттер и сеттер для табличной части
+    for (const ts in meta.tabular_sections) {
+      text += `get ${ts}(){return this._getter_ts('${ts}')}\nset ${ts}(v){this._setter_ts('${ts}',v)}\n`;
+    }
 
-  // если описан расширитель объекта, дополняем
-  if(extText){
-    text += extText;
+    if(objText){
+      text += objText;
+    }
   }
 
   text += `}\n`;

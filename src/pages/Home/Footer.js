@@ -2,16 +2,16 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from 'material-ui/styles';
-import Typography from 'material-ui/Typography';
-import Grid from 'material-ui/Grid';
+import {withStyles} from '@material-ui/styles';
+import Typography from '@material-ui/core/Typography';
+import Grid from '@material-ui/core/Grid';
 
 const styleSheet = theme => ({
   root: {
     overflow: 'auto',
   },
   layout: {
-    padding: theme.spacing.unit * 6,
+    padding: theme.spacing(6),
   },
   list: {
     margin: 0,
@@ -19,8 +19,8 @@ const styleSheet = theme => ({
     listStyle: 'none',
   },
   listItem: {
-    paddingTop: theme.spacing.unit / 2,
-    paddingBottom: theme.spacing.unit / 2,
+    paddingTop: theme.spacing() / 2,
+    paddingBottom: theme.spacing() / 2,
   },
 });
 
@@ -30,32 +30,26 @@ function AppFooter(props) {
   return (
     <footer className={classes.root}>
       <div className={classes.layout}>
-        <Typography type="title" gutterBottom>Быстрые ссылки</Typography>
-        <Typography type="subheading" component="div">
+        <Typography variant="h6" gutterBottom>Быстрые ссылки</Typography>
+        <Typography variant="subtitle1" component="div">
           <Grid container spacing={0}>
             <Grid item xs={12} sm={6}>
               <ul className={classes.list}>
                 <li className={classes.listItem}>
-                  <a href="https://github.com/oknosoft/flowcon">GitHub</a>
+                  <a href="https://github.com/oknosoft/helloworld" target="_blank" rel="noopener noreferrer">GitHub</a>
                 </li>
                 <li className={classes.listItem}>
-                  <a href="https://github.com/oknosoft/metadata.js">Metadata.js</a>
-                </li>
-                <li className={classes.listItem}>
-                  <a href="https://github.com/oknosoft/flowcon">Примеры</a>
+                  <a href="https://github.com/oknosoft/metadata.js" target="_blank" rel="noopener noreferrer">Metadata.js</a>
                 </li>
               </ul>
             </Grid>
             <Grid item xs={12} sm={6}>
               <ul className={classes.list}>
                 <li className={classes.listItem}>
-                  <a href="https://github.com/oknosoft/flowcon">Сообщество</a>
+                  <a href="https://github.com/oknosoft/metadata.js" target="_blank" rel="noopener noreferrer">Metadata.js</a>
                 </li>
                 <li className={classes.listItem}>
-                  <a href="https://github.com/oknosoft/flowcon">Дорожная карта</a>
-                </li>
-                <li className={classes.listItem}>
-                  <a href="https://github.com/oknosoft/flowcon">Команда</a>
+                  <a href="https://github.com/oknosoft/flowcon" target="_blank" rel="noopener noreferrer">Дорожная карта</a>
                 </li>
               </ul>
             </Grid>

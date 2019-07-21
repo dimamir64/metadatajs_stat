@@ -57,7 +57,7 @@ export default function ($p) {
                 register: key[3],
                 note: key[4],
                 duration: value,
-                amount: value * 3000,
+                amount: value * 4000,
               });
             });
             return res;

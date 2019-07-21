@@ -1,10 +1,12 @@
-
 /**
  * Reducer initial state
  */
+
+import {mainTitle} from '../../components/App/AppView';
+
 export default {
   'common': {
-    title: 'Флакон: потоки задач',
+    title: mainTitle,
   },
   OrderList: {
     state_filter: '',

@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
 import Helmet from 'react-helmet';
-import Typography from 'material-ui/Typography';
+import Typography from '@material-ui/core/Typography';
 import AppContent from 'metadata-react/App/AppContent';
 
 const mainTitle = 'Профиль пользователя';
